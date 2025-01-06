@@ -108,9 +108,6 @@ void Create_Output_Connections(AI_Client* client) {
 
 
 void Create_Connections(AI_Client* client) {
-    // THIS NEEDS TO BE OVERHAULED
-    // Currently, the outgoing connections of one node and the incoming connections of the next node are completely independent
-    // There needs to be checks in place to ensure that no duplicate connections are made
     seed = time(NULL);
     srand(seed);
     Create_Input_Connections(client);
@@ -184,14 +181,12 @@ int Forward_Propagate(AI_Client* client, float* input_vector, uint16_t input_vec
     return 0;
 }
 
-int Back_Propagate(AI_Client* client, float* output_vector, uint16_t output_vector_depth) {
+int Back_Propagate(AI_Client* client, float* true_output, uint16_t output_vector_depth) {
     if (output_vector_depth < client->output_layer->depth) {
         printf("Output vector is too small! Expects %i elements.", client->output_layer->depth);
         return 1;
     }
-    float predicted_output = client->output_layer->nodes[0].input;
-    float true_output = output_vector[0];
-    float loss = -(true_output * log(predicted_output) + (1 - true_output) * log(1 - predicted_output));
+    float loss = BCE_Loss(client, true_output);
 }
 
 int Clear_Nodes(AI_Client* client) {
@@ -218,4 +213,14 @@ float Activation_Function(Node* node) {
             return fmax(0, node->input);
             break;
     }
+}
+
+float BCE_Loss(AI_Client* client, float* true_output) {
+    float loss = 0;
+    for (int i = 0; i < client->output_layer->depth; i++) {
+        float predicted_output = client->output_layer->nodes[i].input;
+        loss += (true_output[i] * log(predicted_output) + (1 - true_output[i]) * log(1 - predicted_output));
+    }
+    loss *= (-1 / client->output_layer->depth);
+    return loss;
 }

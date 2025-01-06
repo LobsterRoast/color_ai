@@ -41,7 +41,7 @@ struct Layer {
 typedef struct {
     Layer* input_layer;
     Layer* output_layer;
-    int layerId;
+    int layer_id;
 } AI_Client;
 
 
@@ -57,10 +57,10 @@ int Forward_Propagate(AI_Client* client, float* input_vector, uint16_t input_vec
 int Clear_Nodes(AI_Client* client);
 float Activation_Function(Node* node);
 // Mean Square Error Loss Function (For Regression)
-float MSE_Loss(Layer* output_layer, float* output_vector, uint16_t output_vector_depth);
+float MSE_Loss(AI_Client* client, float* true_output);
 // Cross Entropy Loss Function (For Multi-Class Classification)
-float Cross_Entropy_Loss(Layer* output_layer, float* output_vector, uint16_t output_vector_depth);
+float Cross_Entropy_Loss(AI_Client* client, float* true_output);
 // Binary Cross-Entropy Loss (For Multi-Label Classification)
-float BCE_Loss(Layer* output_layer, float* output_vector, uint16_t output_vector_depth);
+float BCE_Loss(AI_Client* client, float* true_output);
 
 #endif
