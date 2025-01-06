@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 #include <time.h>
 
 #include "ai.h"
@@ -150,14 +151,14 @@ int Free_AI_Client(AI_Client* client) {
 }
 
 void Forward_Pass_On_Layer(Layer* current_layer) {
-    Layer* last_layer = current_layer->last;
+    Layer* next_layer = current_layer->next;
     // i represents an iterator through the nodes of the layer we're CURRENTLY OPERATING ON.
     for (int i = 0; i < current_layer->depth; i++) {
-        // j represents an iterator through the nodes of the layer we're RECEIVING INPUTS FROM.
-        for (int j = 0; j < last_layer->depth; j++) {
-            current_layer->nodes[i].input += last_layer->nodes[j].output;
+        // j represents an iterator through the nodes of the layer we're SENDING INPUTS TO.
+        for (int j = 0; j < current_layer->nodes[i].outgoing_connection_count; j++) {
+            Connection* connection = current_layer->nodes[i].outgoing_connections[j];
+            connection->receiving_node->input += Activation_Function(&current_layer->nodes[i]) * connection->weight;
         }
-        //current_layer->nodes[i].input = Activation_Function()
     }
 }
 
@@ -170,8 +171,9 @@ int Forward_Propagate(AI_Client* client, float* input_vector, uint16_t input_vec
         client->input_layer->nodes[i].input = input_vector[i];
     }
     Layer* current_layer = client->input_layer->next;
-    while (current_layer != NULL) {
+    while (current_layer->layer_type != LAYER_TYPE_OUTPUT) {
         Forward_Pass_On_Layer(current_layer);
+        current_layer = current_layer->next;
     }
     return 0;
 }
@@ -198,5 +200,12 @@ int Clear_Nodes(AI_Client* client) {
 }
 
 float Activation_Function(Node* node) {
-
+    switch(node->layer->layer_type) {
+        case LAYER_TYPE_INPUT:
+            return node->input;
+            break;
+        case LAYER_TYPE_HIDDEN:
+            return fmax(0, node->input);
+            break;
+    }
 }
