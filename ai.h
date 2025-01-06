@@ -56,5 +56,11 @@ int Free_AI_Client(AI_Client* client);
 int Forward_Propagate(AI_Client* client, float* input_vector, uint16_t input_vector_depth);
 int Clear_Nodes(AI_Client* client);
 float Activation_Function(Node* node);
+// Mean Square Error Loss Function (For Regression)
+float MSE_Loss(Layer* output_layer, float* output_vector, uint16_t output_vector_depth);
+// Cross Entropy Loss Function (For Multi-Class Classification)
+float Cross_Entropy_Loss(Layer* output_layer, float* output_vector, uint16_t output_vector_depth);
+// Binary Cross-Entropy Loss (For Multi-Label Classification)
+float BCE_Loss(Layer* output_layer, float* output_vector, uint16_t output_vector_depth);
 
 #endif

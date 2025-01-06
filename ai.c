@@ -183,6 +183,9 @@ int Back_Propagate(AI_Client* client, float* output_vector, uint16_t output_vect
         printf("Output vector is too small! Expects %i elements.", client->output_layer->depth);
         return 1;
     }
+    float predicted_output = client->output_layer->nodes[0].input;
+    float true_output = output_vector[0];
+    float loss = -(true_output * log(predicted_output) + (1 - true_output) * log(1 - predicted_output));
 }
 int Clear_Nodes(AI_Client* client) {
     Layer* current_layer = client->input_layer;
