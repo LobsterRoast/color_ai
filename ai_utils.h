@@ -8,7 +8,7 @@ typedef struct {
     double y;
 } Vector2;
 
-float gen_rand(int* seed);
+float gen_rand();
 
 char Is_Activated(bool activated);
 

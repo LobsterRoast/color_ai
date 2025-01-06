@@ -7,6 +7,8 @@
 #include "ai.h"
 #include "ai_utils.h"
 
+int seed = 0;
+
 void Create_Input_Layer(AI_Client* client, uint16_t input_layer_depth) {
     client->input_layer = (Layer*)malloc(sizeof(Layer));
     client->input_layer->nodes = (Node*)malloc(sizeof(Node)*input_layer_depth);
@@ -49,13 +51,17 @@ void Create_Remaining_Layers(AI_Client* client, uint16_t output_layer_depth, uin
 }
 
 void Create_Input_Connections(AI_Client* client) {
+    // Iterate through nodes in the current layer
     for (int i = 0; i < client->input_layer->depth; i++) {
         client->input_layer->nodes[i].outgoing_connection_count = client->input_layer->next->depth;
         client->input_layer->nodes[i].outgoing_connections = (Connection**)malloc(sizeof(Connection*) * client->input_layer->nodes[i].outgoing_connection_count);
+        // Iterate through nodes of the next layer
         for (int j = 0; j < client->input_layer->next->depth; j++) {
             client->input_layer->nodes[i].outgoing_connections[j] = (Connection*)malloc(sizeof(Connection));
             client->input_layer->nodes[i].outgoing_connections[j]->sending_node = &client->input_layer->next->nodes[j];
             client->input_layer->nodes[i].outgoing_connections[j]->receiving_node = &client->input_layer->nodes[i];
+            // Deparallelize the weights so the AI can learn properly
+            client->input_layer->nodes[i].outgoing_connections[j]->weight = gen_rand(&seed);
         }
     }
 }
@@ -81,6 +87,8 @@ void Create_Hidden_Connections(AI_Client* client) {
                 current_layer->nodes[i].outgoing_connections[j] = (Connection*)malloc(sizeof(Connection));
                 current_layer->nodes[i].outgoing_connections[j]->sending_node = &current_layer->nodes[i];
                 current_layer->nodes[i].outgoing_connections[j]->receiving_node = &current_layer->next->nodes[j];
+                // Deparallelize the weights so the AI can learn properly
+                current_layer->nodes[i].outgoing_connections[j]->weight = gen_rand(&seed);
             }
         }
         current_layer = current_layer->next;
@@ -102,27 +110,13 @@ void Create_Connections(AI_Client* client) {
     // THIS NEEDS TO BE OVERHAULED
     // Currently, the outgoing connections of one node and the incoming connections of the next node are completely independent
     // There needs to be checks in place to ensure that no duplicate connections are made
+    seed = time(NULL);
+    srand(seed);
     Create_Input_Connections(client);
     Create_Hidden_Connections(client);
     Create_Output_Connections(client);
 }
-void Deparallelize(AI_Client* client) {
-    // Initialize weights and biases to random values to break symmetry
-    // Starting at input_layer->next because input_layer does not have weights
-    Layer* current_layer = client->input_layer->next;
-    int seed = time(NULL);
-    srand(time(NULL));
-    while (current_layer != NULL) {
-        for (int i = 0; i < current_layer->depth; i++) {
-            // This is an SRNG chain where the result of each call of gen_rand is used as the seed of the next one
-            // This is not cryptographically secure, but it doesn't need to be. As long as it breaks symmetry, it has
-            // done what it needs to do.
-            // The weights cannot be parallel (i.e. all initialized to 0), or else the neural network will not be able to learn properly.
-            //current_layer->nodes[i].weight = gen_rand(&seed);
-        }
-        current_layer = current_layer->next;
-    }
-}
+
 int Create_AI_Client(
     AI_Client* client, 
     uint16_t input_layer_depth, 
@@ -133,7 +127,6 @@ int Create_AI_Client(
     Create_Input_Layer(client, input_layer_depth);
     Create_Remaining_Layers(client, output_layer_depth, hidden_layer_depth, hidden_layer_count);
     Create_Connections(client);
-    Deparallelize(client);
     return 0;
 }
 

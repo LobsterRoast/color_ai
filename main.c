@@ -7,10 +7,9 @@
 int main() {
     float inputs[] = {1.0, 0.0, 0.0};
     AI_Client client;
-    while(true) {
     Create_AI_Client(&client, 3, 1, 10, 5);
+    printf("%f", client.input_layer->nodes[0].outgoing_connections[0]->weight);
     //Forward_Propagate(&client, inputs, 3);
     //Clear_Nodes(&client);
     Free_AI_Client(&client);
-    }
 }
