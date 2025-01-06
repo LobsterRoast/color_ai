@@ -134,11 +134,17 @@ int Create_AI_Client(
 int Free_AI_Client(AI_Client* client) {
     Layer* current_layer = client->input_layer;
     Layer* next_layer;
+    // Recurse through each layer
     while(current_layer != NULL) {
+        // Recurse through nodes in each layer freeing the connection pointers
         for (int i = 0; i < current_layer->depth; i++) {
             for (int j = 0; j < current_layer->nodes[i].outgoing_connection_count; j++) {
+                // outgoing_connections is a Connection**. This frees the inner pointer
+                // incoming_connections don't need to be freed because each incoming connection shares memory
+                // with a corresponding outgoing connection
                 free(current_layer->nodes[i].outgoing_connections[j]);
             }
+            // This frees the outer encompassing pointers
             free(current_layer->nodes[i].incoming_connections);
             free(current_layer->nodes[i].outgoing_connections);
         }
@@ -187,6 +193,7 @@ int Back_Propagate(AI_Client* client, float* output_vector, uint16_t output_vect
     float true_output = output_vector[0];
     float loss = -(true_output * log(predicted_output) + (1 - true_output) * log(1 - predicted_output));
 }
+
 int Clear_Nodes(AI_Client* client) {
     Layer* current_layer = client->input_layer;
     while(current_layer->layer_type != LAYER_TYPE_OUTPUT) {
